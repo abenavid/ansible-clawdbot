@@ -1,9 +1,13 @@
 ---
 # Main system tools orchestration - delegates to OS-specific tasks
 
-- name: Include Linux system tools installation
+- name: Include Linux system tools installation (Debian/Ubuntu)
   ansible.builtin.include_tasks: system-tools-linux.yml
   when: ansible_os_family == 'Debian'
+
+- name: Include Linux system tools installation (RedHat family)
+  ansible.builtin.include_tasks: system-tools-redhat.yml
+  when: ansible_os_family == 'RedHat'
 
 - name: Include macOS system tools installation
   ansible.builtin.include_tasks: system-tools-macos.yml
@@ -11,8 +15,8 @@
 
 - name: Display unsupported OS warning
   ansible.builtin.fail:
-    msg: "Unsupported OS family: {{ ansible_os_family }}. Only Debian/Ubuntu and macOS are supported."
-  when: ansible_os_family not in ['Debian', 'Darwin']
+    msg: "Unsupported OS family: {{ ansible_os_family }}. Only Debian/Ubuntu, RedHat, and macOS are supported."
+  when: ansible_os_family not in ['Debian', 'RedHat', 'Darwin']
 
 # Common tasks for all operating systems
 

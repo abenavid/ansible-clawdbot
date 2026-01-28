@@ -1,0 +1,48 @@
+---
+# Linux-specific Docker installation (RedHat family: RHEL, CentOS, Rocky, Alma)
+
+- name: Install required system packages for Docker (RedHat family)
+  ansible.builtin.dnf:
+    name:
+      - yum-utils
+      - ca-certificates
+      - curl
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+    update_cache: true
+
+- name: Add Docker CE repository (RedHat family)
+  ansible.builtin.yum_repository:
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+    enabled: true
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
+
+- name: Install Docker CE (RedHat family)
+  ansible.builtin.dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: Ensure Docker service is started and enabled (RedHat family)
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Add user to docker group (RedHat family)
+  ansible.builtin.user:
+    name: "{{ clawdbot_user }}"
+    groups: docker
+    append: true
+
+- name: Reset SSH connection to apply docker group (RedHat family)
+  ansible.builtin.meta: reset_connection
+

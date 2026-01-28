@@ -1,0 +1,74 @@
+---
+# Linux-specific firewall configuration (RedHat family: RHEL, CentOS, Rocky, Alma)
+# Uses firewalld for host firewall and configures DOCKER-USER chain for container isolation.
+
+- name: Install firewalld (RedHat family)
+  ansible.builtin.dnf:
+    name: firewalld
+    state: present
+    update_cache: true
+
+- name: Ensure firewalld is started and enabled (RedHat family)
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Allow SSH on port 22 (firewalld)
+  ansible.posix.firewalld:
+    port: 22/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Allow Tailscale UDP port 41641 (firewalld)
+  ansible.posix.firewalld:
+    port: 41641/udp
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Get default network interface (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      ip route | grep default | awk '{print $5}' | head -n1
+    executable: /bin/bash
+  register: default_interface_redhat
+  changed_when: false
+
+- name: Ensure DOCKER-USER chain exists (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      iptables -nL DOCKER-USER >/dev/null 2>&1 || iptables -N DOCKER-USER
+    executable: /bin/bash
+  args:
+    warn: false
+
+- name: Allow established connections in DOCKER-USER (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      iptables -C DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
+      iptables -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    executable: /bin/bash
+  args:
+    warn: false
+
+- name: Allow localhost in DOCKER-USER (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      iptables -C DOCKER-USER -i lo -j ACCEPT 2>/dev/null || \
+      iptables -A DOCKER-USER -i lo -j ACCEPT
+    executable: /bin/bash
+  args:
+    warn: false
+
+- name: Block forwarded traffic from external interface in DOCKER-USER (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      iptables -C DOCKER-USER -i {{ default_interface_redhat.stdout }} -j DROP 2>/dev/null || \
+      iptables -A DOCKER-USER -i {{ default_interface_redhat.stdout }} -j DROP
+    executable: /bin/bash
+  args:
+    warn: false
+

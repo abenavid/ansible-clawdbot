@@ -20,8 +20,8 @@
 
     - name: Detect operating system
       ansible.builtin.set_fact:
-        is_macos: "{{ ansible_os_family == 'Darwin' }}"
-        is_linux: "{{ ansible_os_family == 'Debian' }}"
+        is_macos: "{{ ansible_system == 'Darwin' }}"
+        is_linux: "{{ ansible_system == 'Linux' }}"
         is_debian: "{{ ansible_distribution in ['Debian', 'Ubuntu'] }}"
         is_redhat: "{{ ansible_os_family == 'RedHat' }}"
 
@@ -46,6 +46,19 @@
       ansible.builtin.debug:
         msg: "✅ System packages updated and upgraded"
       when: is_debian and apt_upgrade_result.changed
+
+    - name: Update all packages (RedHat family)
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: is_redhat
+      register: dnf_upgrade_result
+
+    - name: Display dnf upgrade results
+      ansible.builtin.debug:
+        msg: "✅ System packages updated and upgraded (dnf)"
+      when: is_redhat and dnf_upgrade_result is defined and dnf_upgrade_result.changed
 
     - name: Check if running as root
       ansible.builtin.command: id -u

@@ -1,10 +1,15 @@
 ---
 # Main Docker orchestration - delegates to OS-specific tasks
 
-- name: Include Linux Docker installation
+- name: Include Linux Docker installation (Debian/Ubuntu)
   ansible.builtin.include_tasks: docker-linux.yml
   when: ansible_os_family == 'Debian'
+
+- name: Include Linux Docker installation (RedHat family)
+  ansible.builtin.include_tasks: docker-redhat.yml
+  when: ansible_os_family == 'RedHat'
 
 - name: Include macOS Docker installation
   ansible.builtin.include_tasks: docker-macos.yml
   when: ansible_os_family == 'Darwin'
+

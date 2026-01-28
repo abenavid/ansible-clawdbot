@@ -1,0 +1,47 @@
+---
+# Node.js installation for RedHat family using NodeSource (Node {{ nodejs_version }})
+# Mirrors the official ClawdBot guidance that Node.js 22+ should be installed first
+# before `npm install -g clawdbot@latest`. See `https://www.clawdbot.onl/clawdbot-install`.
+
+- name: Install required packages for Node.js (RedHat family)
+  ansible.builtin.dnf:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+
+- name: Setup NodeSource repository for Node.js {{ nodejs_version }} (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl -fsSL "https://rpm.nodesource.com/setup_{{ nodejs_version }}" | bash -
+    creates: /etc/yum.repos.d/nodesource.repo
+    executable: /bin/bash
+
+- name: Install Node.js (RedHat family)
+  ansible.builtin.dnf:
+    name: nodejs
+    state: present
+
+- name: Install pnpm globally (RedHat family)
+  ansible.builtin.command: npm install -g pnpm
+  args:
+    creates: /usr/local/bin/pnpm
+
+- name: Verify Node.js installation (RedHat family)
+  ansible.builtin.command: node --version
+  register: node_version_redhat
+  changed_when: false
+
+- name: Verify pnpm installation (RedHat family)
+  ansible.builtin.command: pnpm --version
+  register: pnpm_version_redhat
+  changed_when: false
+
+- name: Display Node.js and pnpm versions (RedHat family)
+  ansible.builtin.debug:
+    msg:
+      - "Node.js version: {{ node_version_redhat.stdout }}"
+      - "pnpm version: {{ pnpm_version_redhat.stdout }}"
+
