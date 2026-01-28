@@ -47,11 +47,13 @@
         msg: "✅ System packages updated and upgraded"
       when: is_debian and apt_upgrade_result.changed
 
-    - name: Update all packages (RedHat family)
+    - name: Update all packages (RedHat family, excluding Node.js)
       ansible.builtin.dnf:
         name: "*"
         state: latest
         update_cache: true
+        exclude:
+          - "nodejs*"
       when: is_redhat
       register: dnf_upgrade_result
 
