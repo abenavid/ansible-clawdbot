@@ -79,33 +79,29 @@
       run_once: true
       changed_when: false
 
-    - name: Check if Homebrew is installed
+    - name: Check if Homebrew is installed (macOS)
       ansible.builtin.stat:
-        path: "{{ '/opt/homebrew/bin/brew' if is_macos else '/home/linuxbrew/.linuxbrew/bin/brew' }}"
+        path: /opt/homebrew/bin/brew
       register: homebrew_check
+      when: is_macos
 
-    - name: Install Homebrew (macOS and Linux)
+    - name: Install Homebrew (macOS only)
       ansible.builtin.shell: |
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
       args:
-        creates: "{{ '/opt/homebrew/bin/brew' if is_macos else '/home/linuxbrew/.linuxbrew/bin/brew' }}"
-      when: not homebrew_check.stat.exists
+        creates: /opt/homebrew/bin/brew
+      when: is_macos and (homebrew_check.stat.exists is not defined or not homebrew_check.stat.exists)
       register: homebrew_install
-
-    - name: Add Homebrew to PATH for current session (Linux)
-      ansible.builtin.set_fact:
-        ansible_env: "{{ ansible_env | combine({'PATH': '/home/linuxbrew/.linuxbrew/bin:' + ansible_env.PATH}) }}"
-      when: is_linux and not is_macos
 
     - name: Add Homebrew to PATH for current session (macOS)
       ansible.builtin.set_fact:
         ansible_env: "{{ ansible_env | combine({'PATH': '/opt/homebrew/bin:' + ansible_env.PATH}) }}"
       when: is_macos
 
-    - name: Display Homebrew installation status
+    - name: Display Homebrew installation status (macOS)
       ansible.builtin.debug:
         msg: "✅ Homebrew installed successfully"
-      when: homebrew_install is defined and homebrew_install.changed
+      when: is_macos and homebrew_install is defined and homebrew_install.changed
 
   roles:
     - clawdbot
