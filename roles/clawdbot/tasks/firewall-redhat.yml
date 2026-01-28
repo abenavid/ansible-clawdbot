@@ -42,8 +42,6 @@
     cmd: |
       iptables -nL DOCKER-USER >/dev/null 2>&1 || iptables -N DOCKER-USER
     executable: /bin/bash
-  args:
-    warn: false
 
 - name: Allow established connections in DOCKER-USER (RedHat family)
   ansible.builtin.shell:
@@ -51,8 +49,6 @@
       iptables -C DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
       iptables -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
     executable: /bin/bash
-  args:
-    warn: false
 
 - name: Allow localhost in DOCKER-USER (RedHat family)
   ansible.builtin.shell:
@@ -60,8 +56,6 @@
       iptables -C DOCKER-USER -i lo -j ACCEPT 2>/dev/null || \
       iptables -A DOCKER-USER -i lo -j ACCEPT
     executable: /bin/bash
-  args:
-    warn: false
 
 - name: Block forwarded traffic from external interface in DOCKER-USER (RedHat family)
   ansible.builtin.shell:
@@ -69,6 +63,4 @@
       iptables -C DOCKER-USER -i {{ default_interface_redhat.stdout }} -j DROP 2>/dev/null || \
       iptables -A DOCKER-USER -i {{ default_interface_redhat.stdout }} -j DROP
     executable: /bin/bash
-  args:
-    warn: false
 
