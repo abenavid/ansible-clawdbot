@@ -24,10 +24,16 @@
     name: nodejs
     state: present
 
-- name: Install pnpm globally (RedHat family)
-  ansible.builtin.command: npm install -g pnpm
-  args:
-    creates: /usr/local/bin/pnpm
+- name: Ensure pnpm is available via corepack (RedHat family)
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      if command -v pnpm >/dev/null 2>&1; then
+        exit 0
+      fi
+      corepack enable
+      corepack prepare pnpm@latest --activate
+    executable: /bin/bash
 
 - name: Verify Node.js installation (RedHat family)
   ansible.builtin.command: node --version
